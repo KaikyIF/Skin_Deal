@@ -7,19 +7,19 @@ const svgPaths = {
 
 // Products Data
 const products = [
-    { id: 1, name: "Pistola Dourada", price: 400.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(3).png" },
-    { id: 2, name: "Luvas Vermelhas", price: 1250.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(1).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png" },
-    { id: 3, name: "Bayonet - Crimson Web", price: 2375.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(2).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png", featured: true },
-    { id: 4, name: "AK-47 Colorida", price: 285.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(3).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png" },
-    { id: 5, name: "M4A4 Roxa", price: 2185.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(4).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Rust.png" },
-    { id: 6, name: "Karambit", price: 756.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(5).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/dota.jpg" },
-    { id: 7, name: "Pistola Bronze", price: 400.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(3).png" },
-    { id: 8, name: "Luvas Rosas", price: 1249.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(1).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png" },
-    { id: 9, name: "Faca Vermelha", price: 2374.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(2).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png" },
-    { id: 10, name: "AK-47 Roxa", price: 285.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(3).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png" },
-    { id: 11, name: "Karambit Fade", price: 400.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(3).png" },
-    { id: 12, name: "Luvas Sport", price: 1265.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(1).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png" },
-    { id: 13, name: "Adaga Stiletto", price: 2378.00, image: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Product)%20(2).png", gameIcon: "file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Game)%20(2).png" }
+    { id: 1, name: "Pistola Dourada", price: 400.00, image: "../Imagens do site/Image%20(Product).png", gameIcon: "../Imagens do site/Image%20(Game)%20(3).png" },
+    { id: 2, name: "Luvas Vermelhas", price: 1250.00, image: "../Imagens%20do%20site/Image%20(Product)%20(1).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" },
+    { id: 3, name: "Bayonet - Crimson Web", price: 2375.00, image: "../Imagens%20do%20site/Image%20(Product)%20(2).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png", featured: true },
+    { id: 4, name: "AK-47 Colorida", price: 285.00, image: "../Imagens%20do%20site/Image%20(Product)%20(3).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" },
+    { id: 5, name: "M4A4 Roxa", price: 2185.00, image: "../Imagens%20do%20site/Image%20(Product)%20(4).png", gameIcon: "../Imagens%20do%20site/Rust.png" },
+    { id: 6, name: "Karambit", price: 756.00, image: "../Imagens%20do%20site/Image%20(Product)%20(5).png", gameIcon: "../Imagens%20do%20site/dota.jpg" },
+    { id: 7, name: "Pistola Bronze", price: 400.00, image: "../Imagens%20do%20site/Image%20(Product).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(3).png" },
+    { id: 8, name: "Luvas Rosas", price: 1249.00, image: "../Imagens%20do%20site/Image%20(Product)%20(1).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" },
+    { id: 9, name: "Faca Vermelha", price: 2374.00, image: "../Imagens%20do%20site/Image%20(Product)%20(2).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" },
+    { id: 10, name: "AK-47 Roxa", price: 285.00, image: "../Imagens%20do%20site/Image%20(Product)%20(3).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" },
+    { id: 11, name: "Karambit Fade", price: 400.00, image: "../Imagens%20do%20site/Image%20(Product).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(3).png" },
+    { id: 12, name: "Luvas Sport", price: 1265.00, image: "../Imagens%20do%20site/Image%20(Product)%20(1).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" },
+    { id: 13, name: "Adaga Stiletto", price: 2378.00, image: "../Imagens%20do%20site/Image%20(Product)%20(2).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" }
 ];
 
 // State
@@ -104,7 +104,7 @@ function createProductCard(product) {
     
     card.innerHTML = `
         <img 
-            src="file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/Image%20(Info)%20(1).png" 
+            src="../Imagens%20do%20site/Image%20(Info)%20(1).png" 
             alt="Info" 
             class="product-info-icon"
         >

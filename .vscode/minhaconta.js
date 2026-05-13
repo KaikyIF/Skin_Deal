@@ -9,12 +9,12 @@ const modalAddSession = document.querySelector('.modal-add-session');
 const accounts = {
     zeca: {
         name: 'Zeca Pagodinho',
-        image: 'file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/07a12d69ab4c8ad8a4988544fdc25f16751ed2e5_widemd%201%20(1).png',
+        image: '../Imagens%20do%20site/07a12d69ab4c8ad8a4988544fdc25f16751ed2e5_widemd%201%20(1).png',
         alt: 'Zeca Pagodinho'
     },
     raca: {
         name: 'RAÇA ABSOLUTA',
-        image: 'file:///C:/Users/Cliente/Documents/GitHub/SkinDeal/Imagens%20do%20site/images%201%20(1).png',
+        image: '../Imagens%20do%20site/images%201%20(1).png',
         alt: 'RAÇA ABSOLUTA'
     }
 };
