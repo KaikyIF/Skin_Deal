@@ -58,3 +58,5 @@ Controller: faz a comunicação entre a interface e as regras do sistema.
 Essa arquitetura permite que o sistema seja mais modular, facilitando futuras atualizações, integração com novos jogos e implementação de novas funcionalidades. Além disso, o modelo cliente-servidor possibilita que múltiplos usuários acessem a plataforma simultaneamente de forma segura e eficiente.
 
 Por se tratar de um sistema com movimentação financeira e autenticação de usuários, a arquitetura também prevê mecanismos de segurança, como criptografia de senhas, autenticação segura e validação das transações realizadas dentro da plataforma.
+
+## [D.E.R](https://github.com/KaikyIF/Skin_Deal/blob/main/Mysql/DER.mwb)
