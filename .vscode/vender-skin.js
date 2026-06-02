@@ -6,6 +6,7 @@ const submitBtn = document.getElementById('submit-btn');
 const productImage = document.getElementById('product-image');
 const gameIcon = document.getElementById('game-icon');
 const chartCanvas = document.getElementById('chart-canvas');
+const API_URL = '../api.php';
 
 // Constants
 const COMMISSION_RATE = 0.05; // 5% commission
@@ -138,9 +139,10 @@ if (backBtn) {
 
 // Submit button - Send trade proposal
 if (submitBtn) {
-    submitBtn.addEventListener('click', () => {
+    submitBtn.addEventListener('click', async () => {
         const announcedPrice = parseCurrency(announcedPriceInput.value);
         const youReceive = calculateYouReceive(announcedPriceInput.value);
+        const product = loadProductData();
         
         if (announcedPrice <= 0) {
             showNotification('Por favor, insira um preço válido.', 'error');
@@ -151,9 +153,24 @@ if (submitBtn) {
         submitBtn.classList.add('loading');
         submitBtn.disabled = true;
         
-        // Simulate API call
-        setTimeout(() => {
-            // Save trade proposal
+        try {
+            const response = await fetch(`${API_URL}?route=sale-proposals`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    skinId: product.id || 3,
+                    announcedPrice
+                })
+            });
+            const result = await response.json();
+
+            if (!result.success) {
+                showNotification(result.message || 'Nao foi possivel enviar a proposta.', 'error');
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                return;
+            }
+
             saveTradePropsal({
                 announcedPrice: announcedPrice,
                 youReceive: youReceive,
@@ -173,8 +190,11 @@ if (submitBtn) {
                     window.location.href = 'troca-venda.html';
                 }, 1500);
             }, 2000);
-            
-        }, 1500);
+        } catch (error) {
+            showNotification('Nao foi possivel conectar ao servidor.', 'error');
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+        }
     });
 }
 

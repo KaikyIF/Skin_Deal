@@ -19,8 +19,10 @@ function showError(fieldId, message) {
     errorElement.classList.add('active');
 }
 
+const API_URL = '../api.php';
+
 // Submit do formulário
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     clearErrors();
@@ -48,9 +50,25 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         isValid = false;
     }
     
-    // Se válido, redireciona para home
     if (isValid) {
-        window.location.href = 'home.html';
+        try {
+            const response = await fetch(`${API_URL}?route=login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const result = await response.json();
+
+            if (!result.success) {
+                showError('password', result.message || 'E-mail ou senha invalidos');
+                return;
+            }
+
+            localStorage.setItem('currentUser', JSON.stringify(result.user));
+            window.location.href = 'home.html';
+        } catch (error) {
+            showError('password', 'Nao foi possivel conectar ao servidor');
+        }
     }
 });
 

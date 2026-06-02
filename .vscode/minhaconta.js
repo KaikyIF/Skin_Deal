@@ -4,6 +4,7 @@ const menuOptions = document.querySelectorAll('.menu-option');
 const modalTrocarConta = document.getElementById('modal-trocar-conta');
 const modalAccountItems = document.querySelectorAll('.modal-account-item');
 const modalAddSession = document.querySelector('.modal-add-session');
+const API_URL = '../api.php';
 
 // Account data
 const accounts = {
@@ -73,9 +74,10 @@ menuOptions.forEach(option => {
         if (action === 'sair') {
             if (confirm('Deseja realmente sair da sua conta?')) {
                 showNotification('Saindo...');
-                setTimeout(() => {
+                fetch(`${API_URL}?route=logout`, { method: 'POST' }).finally(() => {
+                    localStorage.removeItem('currentUser');
                     window.location.href = 'login.html';
-                }, 1500);
+                });
             }
             return;
         }
@@ -305,3 +307,35 @@ function updateModalStates(newAccountKey) {
 
 // Initialize modal on page load
 initializeModal();
+
+async function loadLoggedUser() {
+    try {
+        const response = await fetch(`${API_URL}?route=me`);
+        const result = await response.json();
+        const user = result.success ? result.user : JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+        if (!user) return;
+
+        const profileName = document.querySelector('.profile-name');
+        const profileEmail = document.querySelector('.profile-email');
+        const profileId = document.querySelector('.profile-id');
+        const profileDate = document.querySelector('.profile-date');
+        const earnings = document.querySelector('.earnings-value');
+
+        if (profileName) profileName.textContent = user.name || user.usuarios_nome || 'Usuario SkinDeal';
+        if (profileEmail) profileEmail.textContent = user.email || user.usuarios_email || '';
+        if (profileId) profileId.textContent = `ID: ${user.id || user.usuarios_id || '-'}`;
+        if (profileDate && user.createdAt) profileDate.textContent = `Conta Criada em: ${new Date(user.createdAt).toLocaleDateString('pt-BR')}`;
+        if (earnings && user.earnings !== undefined) earnings.textContent = `R$ ${Number(user.earnings).toFixed(2).replace('.', ',')}`;
+    } catch (error) {
+        const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        if (user) {
+            const profileName = document.querySelector('.profile-name');
+            const profileEmail = document.querySelector('.profile-email');
+            if (profileName) profileName.textContent = user.usuarios_nome || user.name || 'Usuario SkinDeal';
+            if (profileEmail) profileEmail.textContent = user.usuarios_email || user.email || '';
+        }
+    }
+}
+
+loadLoggedUser();

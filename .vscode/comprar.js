@@ -5,6 +5,7 @@ const buyBtn = document.getElementById('buy-btn');
 const productImage = document.getElementById('product-image');
 const gameIcon = document.getElementById('game-icon');
 const steamIcon = document.getElementById('steam-icon');
+const API_URL = '../api.php';
 
 // Load product data from localStorage or use default
 function loadProductData() {
@@ -46,7 +47,33 @@ function loadProductData() {
 }
 
 // Product data
-const productData = loadProductData();
+let productData = loadProductData();
+
+async function loadProductFromApi() {
+    if (!productData.id) return;
+
+    try {
+        const response = await fetch(`${API_URL}?route=skin&id=${encodeURIComponent(productData.id)}`);
+        const result = await response.json();
+
+        if (result.success) {
+            productData = {
+                id: Number(result.skin.id),
+                name: result.skin.name,
+                game: result.skin.game,
+                exterior: result.skin.exterior || productData.exterior,
+                description: result.skin.description || productData.description,
+                priceSkindeal: Number(result.skin.price),
+                priceAnnounced: Number(result.skin.price) * 1.05,
+                image: result.skin.image,
+                gameIcon: result.skin.gameIcon,
+                steamIcon: productData.steamIcon
+            };
+        }
+    } catch (error) {
+        console.warn('Usando produto local porque a API nao respondeu.', error);
+    }
+}
 
 // Initialize page with product data
 function initializePage() {
@@ -294,7 +321,8 @@ window.addEventListener('scroll', () => {
 });
 
 // Initialize page
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+    await loadProductFromApi();
     initializePage();
     updateCartCount();
     console.log('Página de Compra carregada - Produto:', productData.name);

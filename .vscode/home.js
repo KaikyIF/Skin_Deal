@@ -5,8 +5,10 @@ const svgPaths = {
     p35e3f800: "M1.36666 1.36666H2.69999L4.47333 9.64666C4.53838 9.9499 4.70711 10.221 4.95047 10.4132C5.19383 10.6055 5.4966 10.7069 5.80666 10.7H12.3267C12.6301 10.6995 12.9243 10.5955 13.1607 10.4052C13.397 10.2149 13.5614 9.94968 13.6267 9.65332L14.7267 4.69999H3.41333"
 };
 
+const API_URL = '../api.php';
+
 // Products Data
-const products = [
+let products = [
     { id: 1, name: "Pistola Dourada", price: 400.00, image: "../Imagens do site/Image%20(Product).png", gameIcon: "../Imagens do site/Image%20(Game)%20(3).png" },
     { id: 2, name: "Luvas Vermelhas", price: 1250.00, image: "../Imagens%20do%20site/Image%20(Product)%20(1).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png" },
     { id: 3, name: "Bayonet - Crimson Web", price: 2375.00, image: "../Imagens%20do%20site/Image%20(Product)%20(2).png", gameIcon: "../Imagens%20do%20site/Image%20(Game)%20(2).png", featured: true },
@@ -162,6 +164,30 @@ function renderProducts() {
     addEventListeners();
 }
 
+async function loadProducts() {
+    try {
+        const response = await fetch(`${API_URL}?route=skins&search=${encodeURIComponent(searchTerm)}`);
+        const result = await response.json();
+
+        if (result.success) {
+            products = result.skins.map((skin) => ({
+                id: Number(skin.id),
+                name: skin.name,
+                price: Number(skin.price),
+                image: skin.image,
+                gameIcon: skin.gameIcon,
+                game: skin.game,
+                description: skin.description,
+                exterior: skin.exterior
+            }));
+        }
+    } catch (error) {
+        console.warn('Usando produtos locais porque a API nao respondeu.', error);
+    }
+
+    renderProducts();
+}
+
 // Add Event Listeners
 function addEventListeners() {
     // Buy buttons
@@ -188,7 +214,9 @@ function handleBuyClick(productId) {
         price: product.price,
         image: product.image,
         gameIcon: product.gameIcon,
-        game: product.name.includes('CS') || product.name.includes('AK') || product.name.includes('Bayonet') ? 'Counter-Strike 2' : 'Outros Jogos'
+        game: product.game || (product.name.includes('CS') || product.name.includes('AK') || product.name.includes('Bayonet') ? 'Counter-Strike 2' : 'Outros Jogos'),
+        description: product.description,
+        exterior: product.exterior
     }));
     
     // Navigate to purchase page
@@ -219,6 +247,8 @@ function toggleFavorite(productId) {
 
 // Update Cart Count
 function updateCartCount() {
+    if (!cartCount) return;
+
     const count = cart.length;
     cartCount.textContent = count;
     
@@ -290,9 +320,9 @@ document.head.appendChild(style);
 // Search Input Event Listener
 searchInput.addEventListener('input', (e) => {
     searchTerm = e.target.value;
-    renderProducts();
+    loadProducts();
 });
 
 // Initialize
-renderProducts();
+loadProducts();
 updateCartCount();

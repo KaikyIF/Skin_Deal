@@ -6,6 +6,7 @@ const copyBtn = document.getElementById('copy-btn');
 const pixCodeInput = document.getElementById('pix-code');
 const timerElement = document.getElementById('timer');
 const confirmPaymentBtn = document.getElementById('confirm-payment-btn');
+const API_URL = '../api.php';
 
 // Load purchase data
 function loadPurchaseData() {
@@ -300,7 +301,7 @@ window.addEventListener('beforeunload', () => {
 
 // Confirm Payment Button - Redirect to success page
 if (confirmPaymentBtn) {
-    confirmPaymentBtn.addEventListener('click', () => {
+    confirmPaymentBtn.addEventListener('click', async () => {
         // Stop timer
         if (timerInterval) {
             clearInterval(timerInterval);
@@ -310,15 +311,36 @@ if (confirmPaymentBtn) {
         confirmPaymentBtn.textContent = 'Processando...';
         confirmPaymentBtn.disabled = true;
         
-        // Simulate payment processing
-        setTimeout(() => {
+        try {
+            const product = JSON.parse(localStorage.getItem('selectedProduct') || '{}');
+            const response = await fetch(`${API_URL}?route=purchase`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    skinId: product.id || 3,
+                    paymentMethod: 'PIX'
+                })
+            });
+            const result = await response.json();
+
+            if (!result.success) {
+                showNotification(result.message || 'Nao foi possivel confirmar o pagamento.', 'error');
+                confirmPaymentBtn.textContent = 'Confirmar pagamento';
+                confirmPaymentBtn.disabled = false;
+                return;
+            }
+
             showNotification('Pagamento confirmado com sucesso!', 'success');
             
             // Redirect to confirmation page after short delay
             setTimeout(() => {
                 window.location.href = 'pagamento-confirmado.html';
             }, 1000);
-        }, 1500);
+        } catch (error) {
+            showNotification('Nao foi possivel conectar ao servidor.', 'error');
+            confirmPaymentBtn.textContent = 'Confirmar pagamento';
+            confirmPaymentBtn.disabled = false;
+        }
     });
 }
 

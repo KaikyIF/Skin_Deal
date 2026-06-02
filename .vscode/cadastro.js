@@ -23,8 +23,10 @@ function showError(fieldId, message) {
     errorElement.classList.add('active');
 }
 
+const API_URL = '../api.php';
+
 // Submit do formulário
-document.getElementById('registerForm').addEventListener('submit', function(e) {
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     clearErrors();
@@ -69,9 +71,25 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
         isValid = false;
     }
     
-    // Se válido, redireciona para home
     if (isValid) {
-        alert('Cadastro realizado com sucesso!');
-        window.location.href = 'home.html';
+        try {
+            const response = await fetch(`${API_URL}?route=register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+            const result = await response.json();
+
+            if (!result.success) {
+                showError('email', result.message || 'Nao foi possivel cadastrar');
+                return;
+            }
+
+            localStorage.setItem('currentUser', JSON.stringify(result.user));
+            alert('Cadastro realizado com sucesso!');
+            window.location.href = 'home.html';
+        } catch (error) {
+            showError('email', 'Nao foi possivel conectar ao servidor');
+        }
     }
 });
