@@ -1,3 +1,5 @@
+const API_URL = '/api.php';   // ← Caminho correto
+
 // Validação de e-mail
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -10,6 +12,7 @@ function clearErrors() {
     document.getElementById('emailError').classList.remove('active');
     document.getElementById('passwordError').classList.remove('active');
     document.getElementById('confirmPasswordError').classList.remove('active');
+    
     document.getElementById('nameError').textContent = '';
     document.getElementById('emailError').textContent = '';
     document.getElementById('passwordError').textContent = '';
@@ -19,11 +22,11 @@ function clearErrors() {
 // Mostrar erro
 function showError(fieldId, message) {
     const errorElement = document.getElementById(fieldId + 'Error');
-    errorElement.textContent = message;
-    errorElement.classList.add('active');
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.classList.add('active');
+    }
 }
-
-const API_URL = '../api.php';
 
 // Submit do formulário
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
@@ -38,13 +41,11 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     
     let isValid = true;
     
-    // Validação do nome
     if (!name) {
         showError('name', 'Por favor, insira seu nome');
         isValid = false;
     }
     
-    // Validação do e-mail
     if (!email) {
         showError('email', 'Por favor, insira seu e-mail');
         isValid = false;
@@ -53,7 +54,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         isValid = false;
     }
     
-    // Validação da senha
     if (!password) {
         showError('password', 'Por favor, insira sua senha');
         isValid = false;
@@ -62,7 +62,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         isValid = false;
     }
     
-    // Validação da confirmação de senha
     if (!confirmPassword) {
         showError('confirmPassword', 'Por favor, confirme sua senha');
         isValid = false;
@@ -71,25 +70,29 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         isValid = false;
     }
     
-    if (isValid) {
-        try {
-            const response = await fetch(`${API_URL}?route=register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password })
-            });
-            const result = await response.json();
+    if (!isValid) return;
 
-            if (!result.success) {
-                showError('email', result.message || 'Nao foi possivel cadastrar');
-                return;
-            }
+    try {
+        const response = await fetch(API_URL + '?route=register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
 
-            localStorage.setItem('currentUser', JSON.stringify(result.user));
-            alert('Cadastro realizado com sucesso!');
-            window.location.href = 'home.html';
-        } catch (error) {
-            showError('email', 'Nao foi possivel conectar ao servidor');
+        const result = await response.json();
+
+        if (!result.success) {
+            showError('email', result.message || 'Não foi possível cadastrar');
+            return;
         }
+
+        // Sucesso
+        localStorage.setItem('userEmail', email);
+        alert('Cadastro realizado com sucesso!');
+        window.location.href = 'home.html';
+
+    } catch (error) {
+        console.error(error);
+        showError('email', 'Não foi possível conectar ao servidor');
     }
 });

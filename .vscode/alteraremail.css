@@ -102,13 +102,9 @@ body {
 .input-container {
     position: relative;
     width: 100%;
-    height: 54px;
     background-color: white;
     border: 0.909px solid #e0e0e0;
     border-radius: 8px;
-    display: flex;
-    align-items: center;
-    padding: 4px 16px;
     transition: border-color 0.2s;
 }
 
@@ -127,25 +123,28 @@ body {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 500;
-    line-height: 19.5px;
-    color: black;
+    color: #666;
     border-radius: 4px;
     pointer-events: none;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     z-index: 1;
 }
 
 /* Label sobe quando focado ou preenchido */
 .input-container.filled .input-label,
 .input-container:focus-within .input-label {
-    top: -2px;
+    top: 0;
+    transform: translateY(-50%);
     font-size: 11px;
+    color: #10355b;
+    background-color: white;
+    font-weight: 600;
 }
 
 /* Email Input */
 .email-input {
     width: 100%;
-    height: 100%;
+    height: 54px;
     background: transparent;
     border: none;
     outline: none;
@@ -153,15 +152,16 @@ body {
     font-size: 14px;
     font-weight: 400;
     color: #333;
-    padding-left: 0;
+    padding: 20px 16px 8px 16px;
+    box-sizing: border-box;
 }
 
 .email-input::placeholder {
-    color: #fefefe;
-    opacity: 0;
+    color: transparent;
 }
 
 .email-input:focus::placeholder {
+    color: #999;
     opacity: 0.5;
 }
 
@@ -179,6 +179,7 @@ body {
     color: white;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin-top: 8px;
 }
 
 .submit-btn:hover {
@@ -243,8 +244,19 @@ body {
         padding: 24px 0;
     }
 
-    .input-container {
+    .email-input {
         height: 50px;
+        padding: 18px 14px 6px 14px;
+    }
+    
+    .input-label {
+        left: 14px;
+        font-size: 12px;
+    }
+    
+    .input-container.filled .input-label,
+    .input-container:focus-within .input-label {
+        font-size: 10px;
     }
 
     .submit-btn {

@@ -1,3 +1,5 @@
+const API_URL = '../api.php';
+
 // Validação de e-mail
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -6,23 +8,22 @@ function validateEmail(email) {
 
 // Limpar erros
 function clearErrors() {
-    document.getElementById('emailError').classList.remove('active');
-    document.getElementById('newPasswordError').classList.remove('active');
-    document.getElementById('confirmPasswordError').classList.remove('active');
-    document.getElementById('emailError').textContent = '';
-    document.getElementById('newPasswordError').textContent = '';
-    document.getElementById('confirmPasswordError').textContent = '';
+    document.querySelectorAll('.error').forEach(el => {
+        el.textContent = '';
+        el.classList.remove('active');
+    });
 }
 
 // Mostrar erro
 function showError(fieldId, message) {
-    const errorElement = document.getElementById(fieldId + 'Error');
-    errorElement.textContent = message;
-    errorElement.classList.add('active');
+    const el = document.getElementById(fieldId + 'Error');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.add('active');
 }
 
 // Submit do formulário
-document.getElementById('alterarSenhaForm').addEventListener('submit', function (e) {
+document.getElementById('alterarSenhaForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     clearErrors();
@@ -31,47 +32,54 @@ document.getElementById('alterarSenhaForm').addEventListener('submit', function 
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
-    let isValid = true;
+    let valid = true;
 
-    // Validação do e-mail
     if (!email) {
-        showError('email', 'Por favor, insira seu e-mail');
-        isValid = false;
+        showError('email', 'Informe o e-mail');
+        valid = false;
     } else if (!validateEmail(email)) {
-        showError('email', 'Por favor, insira um e-mail válido');
-        isValid = false;
+        showError('email', 'E-mail inválido');
+        valid = false;
     }
 
-    // Validação da nova senha
     if (!newPassword) {
-        showError('newPassword', 'Por favor, insira sua nova senha');
-        isValid = false;
+        showError('newPassword', 'Informe a nova senha');
+        valid = false;
     } else if (newPassword.length < 6) {
-        showError('newPassword', 'A senha deve ter pelo menos 6 caracteres');
-        isValid = false;
+        showError('newPassword', 'Senha deve ter no mínimo 6 caracteres');
+        valid = false;
     }
 
-    // Validação da confirmação de senha
-    if (!confirmPassword) {
-        showError('confirmPassword', 'Por favor, confirme sua nova senha');
-        isValid = false;
-    } else if (newPassword !== confirmPassword) {
+    if (confirmPassword !== newPassword) {
         showError('confirmPassword', 'As senhas não coincidem');
-        isValid = false;
+        valid = false;
     }
 
-    // Se válido, redireciona
-if (isValid) {
-    // Desabilita o formulário
-    document.getElementById('email').disabled = true;
-    document.getElementById('newPassword').disabled = true;
-    document.getElementById('confirmPassword').disabled = true;
-    document.getElementById('submitBtn').disabled = true;
+    if (!/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        showError('newPassword', 'Senha deve conter letras e números');
+        valid = false;
+    }
 
-    
-    setTimeout(function() {
-        window.location.href = 'confirmacao-codigo.html';
-    }, 500);
-}
+    if (!valid) return;
 
+    try {
+        const res = await fetch(`${API_URL}?route=update-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, newPassword })
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            showError('email', data.message || 'Erro ao alterar senha');
+            return;
+        }
+
+        alert('Senha alterada com sucesso!');
+        window.location.href = 'login.html';
+
+    } catch (err) {
+        showError('email', 'Erro de conexão com servidor');
+    }
 });

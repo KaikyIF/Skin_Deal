@@ -1,12 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
-session_start();
-
-spl_autoload_register(function (string $class): void {
-    $path = __DIR__ . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $class) . '.php';
-    if (is_file($path)) {
+spl_autoload_register(function ($class) {
+    $path = __DIR__ . '/' . str_replace('\\', '/', $class) . '.php';
+    if (file_exists($path)) {
         require $path;
     }
 });
@@ -14,32 +11,24 @@ spl_autoload_register(function (string $class): void {
 use Models\SkinDealRepository;
 
 header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
-function input(): array
-{
-    $raw = file_get_contents('php://input');
-    if (!$raw) {
-        return $_POST;
-    }
-
-    $data = json_decode($raw, true);
-    return is_array($data) ? $data : $_POST;
-}
-
-function respond(array $payload, int $status = 200): void
-{
-    http_response_code($status);
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-function requireUser(): int
-{
-    if (!isset($_SESSION['user_id'])) {
-        respond(['success' => false, 'message' => 'Usuario nao autenticado.'], 401);
-    }
+function input() {
+    $raw = file_get_contents('php://input');
+    return $raw ? json_decode($raw, true) : $_POST;
+}
 
-    return (int) $_SESSION['user_id'];
+function respond($data, $status = 200) {
+    http_response_code($status);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 $repo = new SkinDealRepository();
@@ -47,76 +36,242 @@ $route = $_GET['route'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
+    // ==================== CADASTRO ====================
     if ($route === 'register' && $method === 'POST') {
         $data = input();
-        $name = trim($data['name'] ?? '');
-        $email = trim($data['email'] ?? '');
-        $password = (string) ($data['password'] ?? '');
+        $name = $data['name'] ?? '';
+        $email = $data['email'] ?? '';
+        $password = $data['password'] ?? '';
 
-        if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6) {
-            respond(['success' => false, 'message' => 'Preencha nome, e-mail valido e senha com pelo menos 6 caracteres.'], 422);
+        if (empty($name) || empty($email) || empty($password)) {
+            respond(['success' => false, 'message' => 'Todos os campos são obrigatórios'], 422);
         }
 
-        $id = $repo->createUser($name, $email, $password);
-        $_SESSION['user_id'] = $id;
-        respond(['success' => true, 'message' => 'Cadastro realizado com sucesso.', 'user' => ['id' => $id, 'name' => $name, 'email' => $email]], 201);
+        $userId = $repo->createUser($name, $email, $password);
+        respond([
+            'success' => true, 
+            'message' => 'Cadastro realizado com sucesso!',
+            'user' => ['id' => $userId, 'usuarios_id' => $userId]
+        ]);
     }
 
+    // ==================== LOGIN ====================
     if ($route === 'login' && $method === 'POST') {
         $data = input();
-        $email = trim($data['email'] ?? '');
-        $password = (string) ($data['password'] ?? '');
-        $user = $repo->authenticate($email, $password, $_SERVER['REMOTE_ADDR'] ?? '');
+        $email = $data['email'] ?? '';
+        $password = $data['password'] ?? '';
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
 
+        $user = $repo->authenticate($email, $password, $ip);
+        if ($user) {
+            respond([
+                'success' => true, 
+                'user' => $user
+            ]);
+        } else {
+            respond(['success' => false, 'message' => 'Email ou senha incorretos'], 401);
+        }
+    }
+
+    // ==================== ALTERAR E-MAIL ====================
+    if ($route === 'update-email' && $method === 'POST') {
+        $data = input();
+        
+        $userId = isset($data['userId']) ? (int)$data['userId'] : null;
+        $currentEmail = $data['currentEmail'] ?? '';
+        $newEmail = $data['newEmail'] ?? '';
+        
+        if (empty($newEmail)) {
+            respond(['success' => false, 'message' => 'Novo e-mail é obrigatório'], 422);
+        }
+        
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            respond(['success' => false, 'message' => 'E-mail inválido'], 422);
+        }
+        
+        $user = null;
+        if ($userId) {
+            $user = $repo->getUserById($userId);
+        }
+        
+        if (!$user && !empty($currentEmail)) {
+            $user = $repo->getUserByEmail($currentEmail);
+        }
+        
         if (!$user) {
-            respond(['success' => false, 'message' => 'E-mail ou senha invalidos.'], 401);
+            respond(['success' => false, 'message' => 'Usuário não encontrado'], 404);
         }
-
-        $_SESSION['user_id'] = (int) $user['usuarios_id'];
-        respond(['success' => true, 'message' => 'Login realizado com sucesso.', 'user' => $user]);
+        
+        if ($repo->emailExists($newEmail, $user['usuarios_id'])) {
+            respond(['success' => false, 'message' => 'Este e-mail já está em uso'], 409);
+        }
+        
+        $updated = $repo->updateUserEmail($user['usuarios_id'], $newEmail);
+        
+        if ($updated) {
+            respond(['success' => true, 'message' => 'E-mail atualizado com sucesso!']);
+        } else {
+            respond(['success' => false, 'message' => 'Erro ao atualizar e-mail'], 500);
+        }
     }
 
-    if ($route === 'logout' && $method === 'POST') {
-        session_destroy();
-        respond(['success' => true, 'message' => 'Sessao encerrada.']);
+    // ==================== ALTERAR SENHA ====================
+    if ($route === 'update-password' && $method === 'POST') {
+        $data = input();
+        $email = $data['email'] ?? '';
+        $newPassword = $data['newPassword'] ?? '';
+        
+        if (empty($email) || empty($newPassword)) {
+            respond(['success' => false, 'message' => 'Todos os campos são obrigatórios'], 422);
+        }
+        
+        if (strlen($newPassword) < 6) {
+            respond(['success' => false, 'message' => 'A senha deve ter pelo menos 6 caracteres'], 422);
+        }
+        
+        $updated = $repo->updatePassword($email, $newPassword);
+        
+        if ($updated) {
+            respond(['success' => true, 'message' => 'Senha alterada com sucesso!']);
+        } else {
+            respond(['success' => false, 'message' => 'E-mail não encontrado'], 404);
+        }
     }
 
-    if ($route === 'me' && $method === 'GET') {
-        $user = $repo->getUserSummary(requireUser());
-        respond(['success' => true, 'user' => $user]);
+    // ==================== EXCLUIR CONTA ====================
+    if ($route === 'delete-user' && $method === 'POST') {
+        $data = input();
+        $email = $data['email'] ?? '';
+        $password = $data['password'] ?? '';
+        
+        if (empty($email) || empty($password)) {
+            respond(['success' => false, 'message' => 'Todos os campos são obrigatórios'], 422);
+        }
+        
+        $deleted = $repo->deleteUser($email, $password);
+        
+        if ($deleted) {
+            respond(['success' => true, 'message' => 'Conta excluída com sucesso!']);
+        } else {
+            respond(['success' => false, 'message' => 'E-mail ou senha incorretos'], 401);
+        }
     }
 
+    // ==================== LISTAR SKINS ====================
     if ($route === 'skins' && $method === 'GET') {
-        respond(['success' => true, 'skins' => $repo->listSkins($_GET['search'] ?? null)]);
+        $search = $_GET['search'] ?? null;
+        $skins = $repo->listSkins($search);
+        respond(['success' => true, 'skins' => $skins]);
     }
 
+    // ==================== BUSCAR SKIN POR ID ====================
     if ($route === 'skin' && $method === 'GET') {
-        $skin = $repo->getSkin((int) ($_GET['id'] ?? 0));
-        if (!$skin) {
-            respond(['success' => false, 'message' => 'Skin nao encontrada.'], 404);
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            respond(['success' => false, 'message' => 'ID da skin é obrigatório'], 422);
         }
-        respond(['success' => true, 'skin' => $skin]);
+        
+        $skin = $repo->getSkin((int)$id);
+        if ($skin) {
+            respond(['success' => true, 'skin' => $skin]);
+        } else {
+            respond(['success' => false, 'message' => 'Skin não encontrada'], 404);
+        }
     }
 
+    // ==================== CRIAR PROPOSTA DE VENDA ====================
     if ($route === 'sale-proposals' && $method === 'POST') {
         $data = input();
-        $id = $repo->createSaleProposal(
-            requireUser(),
-            (int) ($data['skinId'] ?? 0),
-            (float) ($data['announcedPrice'] ?? 0)
-        );
-        respond(['success' => true, 'message' => 'Proposta enviada com sucesso.', 'proposalId' => $id], 201);
+        $userId = $data['userId'] ?? null;
+        $skinId = $data['skinId'] ?? null;
+        $announcedPrice = $data['announcedPrice'] ?? null;
+        
+        if (!$userId || !$skinId || !$announcedPrice) {
+            respond(['success' => false, 'message' => 'Todos os campos são obrigatórios'], 422);
+        }
+        
+        $proposalId = $repo->createSaleProposal((int)$userId, (int)$skinId, (float)$announcedPrice);
+        respond(['success' => true, 'proposal_id' => $proposalId]);
     }
 
+    // ==================== CRIAR COMPRA ====================
     if ($route === 'purchase' && $method === 'POST') {
         $data = input();
-        $id = $repo->createPurchase(requireUser(), (int) ($data['skinId'] ?? 0), $data['paymentMethod'] ?? 'PIX');
-        respond(['success' => true, 'message' => 'Pagamento confirmado com sucesso.', 'transactionId' => $id], 201);
+        $userId = $data['userId'] ?? null;
+        $skinId = $data['skinId'] ?? null;
+        $paymentMethod = $data['paymentMethod'] ?? 'PIX';
+        
+        if (!$userId || !$skinId) {
+            respond(['success' => false, 'message' => 'Usuário e skin são obrigatórios'], 422);
+        }
+        
+        $purchaseId = $repo->createPurchase((int)$userId, (int)$skinId, $paymentMethod);
+        respond(['success' => true, 'purchase_id' => $purchaseId]);
     }
 
-    respond(['success' => false, 'message' => 'Rota nao encontrada.'], 404);
-} catch (InvalidArgumentException $exception) {
-    respond(['success' => false, 'message' => $exception->getMessage()], 422);
-} catch (Throwable $exception) {
-    respond(['success' => false, 'message' => 'Erro interno no servidor.', 'detail' => $exception->getMessage()], 500);
+    // ==================== DADOS DO USUÁRIO ====================
+    if ($route === 'me' && $method === 'GET') {
+        $userId = $_GET['userId'] ?? null;
+        
+        if (!$userId) {
+            respond(['success' => false, 'message' => 'Usuário não identificado'], 401);
+        }
+        
+        $user = $repo->getUserSummary((int)$userId);
+        if ($user) {
+            respond(['success' => true, 'user' => $user]);
+        } else {
+            respond(['success' => false, 'message' => 'Usuário não encontrado'], 404);
+        }
+    }
+
+    // ==================== VERIFICAR SESSÃO ====================
+    if ($route === 'check-session' && $method === 'POST') {
+        $data = input();
+        $userId = $data['userId'] ?? null;
+        
+        if ($userId) {
+            $user = $repo->getUserById((int)$userId);
+            if ($user) {
+                respond(['success' => true, 'user' => $user]);
+            } else {
+                respond(['success' => false, 'message' => 'Usuário não encontrado']);
+            }
+        } else {
+            respond(['success' => false, 'message' => 'Não autenticado']);
+        }
+    }
+
+    // ==================== PEGAR EMAIL DO USUÁRIO ====================
+    if ($route === 'get-user-email' && $method === 'POST') {
+        $data = input();
+        $userId = $data['userId'] ?? null;
+        
+        if (!$userId) {
+            respond(['success' => false, 'message' => 'Usuário não identificado'], 401);
+        }
+        
+        $user = $repo->getUserById((int)$userId);
+        if ($user) {
+            respond(['success' => true, 'email' => $user['usuarios_email']]);
+        } else {
+            respond(['success' => false, 'message' => 'Usuário não encontrado'], 404);
+        }
+    }
+
+    // ==================== LOGOUT ====================
+    if ($route === 'logout' && $method === 'POST') {
+        respond(['success' => true, 'message' => 'Logout realizado']);
+    }
+
+    // ==================== ROTA DE TESTE ====================
+    if ($route === 'check' && $method === 'GET') {
+        respond(['success' => true, 'message' => 'API funcionando!']);
+    }
+
+    // ==================== ROTA NÃO ENCONTRADA ====================
+    respond(['success' => false, 'message' => 'Rota não encontrada: ' . $route], 404);
+
+} catch (\Exception $e) {
+    respond(['success' => false, 'message' => 'Erro: ' . $e->getMessage()], 400);
 }

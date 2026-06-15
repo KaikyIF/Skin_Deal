@@ -7,17 +7,7 @@
 
 body {
     font-family: 'Poppins', 'Inter', 'Arial', sans-serif;
-    background: linear-gradient(
-        rgba(20, 28, 36, 0.173) 0%, 
-        rgba(30, 41, 51, 0.17) 0%, 
-        rgba(28, 28, 36, 0.11) 0%, 
-        rgba(24, 28, 36, 0.19) 0%, 
-        rgba(56, 103, 123, 0.2) 0%, 
-        rgba(24, 28, 36, 0.16) 70.673%, 
-        rgba(24, 28, 36, 0.19) 93.269%, 
-        rgba(40, 65, 79, 0.2) 100%
-    ), 
-    linear-gradient(90deg, rgb(20, 28, 36) 0%, rgb(20, 28, 36) 100%);
+    background: linear-gradient(rgba(20, 28, 36, 0.173) 0%, rgba(30, 41, 51, 0.17) 0%, rgba(28, 28, 36, 0.11) 0%, rgba(24, 28, 36, 0.19) 0%, rgba(56, 103, 123, 0.2) 0%, rgba(24, 28, 36, 0.16) 70.673%, rgba(24, 28, 36, 0.19) 93.269%, rgba(40, 65, 79, 0.2) 100%), linear-gradient(90deg, rgb(20, 28, 36) 0%, rgb(20, 28, 36) 100%);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -100,6 +90,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    padding: 33px 0;
 }
 
 /* Input Wrapper */
@@ -111,13 +102,9 @@ body {
 .input-container {
     position: relative;
     width: 100%;
-    height: 40px;
     background-color: white;
     border: 0.909px solid #e0e0e0;
     border-radius: 8px;
-    display: flex;
-    align-items: center;
-    padding: 4px 16px;
     transition: border-color 0.2s;
 }
 
@@ -136,25 +123,28 @@ body {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 500;
-    line-height: 19.5px;
-    color: black;
+    color: #666;
     border-radius: 4px;
     pointer-events: none;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     z-index: 1;
 }
 
-.input-container:focus-within .input-label,
-.password-input:not(:placeholder-shown) + .input-label {
-    top: -2px;
+/* Label sobe quando focado ou preenchido */
+.input-container.filled .input-label,
+.input-container:focus-within .input-label {
+    top: 0;
+    transform: translateY(-50%);
     font-size: 11px;
+    color: #10355b;
+    background-color: white;
+    font-weight: 600;
 }
-
 
 /* Password Input */
 .password-input {
     width: 100%;
-    height: 100%;
+    height: 54px;
     background: transparent;
     border: none;
     outline: none;
@@ -162,22 +152,23 @@ body {
     font-size: 14px;
     font-weight: 400;
     color: #333;
-    padding-left: 0;
+    padding: 20px 16px 8px 16px;
+    box-sizing: border-box;
 }
 
 .password-input::placeholder {
-    color: #fefefe;
-    opacity: 0;
+    color: transparent;
 }
 
 .password-input:focus::placeholder {
+    color: #999;
     opacity: 0.5;
 }
 
 /* Submit Button */
 .submit-btn {
     width: 100%;
-    height: 40px;
+    height: 54px;
     background-color: #10355b;
     border: none;
     border-radius: 8px;
@@ -188,7 +179,7 @@ body {
     color: white;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 40px;
+    margin-top: 8px;
 }
 
 .submit-btn:hover {
@@ -221,6 +212,10 @@ body {
     .page-title {
         font-size: 22px;
     }
+
+    .password-form {
+        padding: 28px 0;
+    }
 }
 
 @media (max-width: 640px) {
@@ -246,14 +241,25 @@ body {
 
     .password-form {
         gap: 20px;
+        padding: 24px 0;
     }
 
-    .input-container {
-        height: 44px;
+    .password-input {
+        height: 50px;
+        padding: 18px 14px 6px 14px;
+    }
+    
+    .input-label {
+        left: 14px;
+        font-size: 12px;
+    }
+    
+    .input-container.filled .input-label,
+    .input-container:focus-within .input-label {
+        font-size: 10px;
     }
 
     .submit-btn {
-        height: 44px;
-        margin-top: 32px;
+        height: 50px;
     }
 }
