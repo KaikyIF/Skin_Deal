@@ -77,8 +77,8 @@ CREATE TABLE IF NOT EXISTS historico_login (
 
 INSERT INTO usuarios (usuarios_nome, usuarios_email, usuarios_senha, usuarios_saldo, usuarios_nivel)
 VALUES
-('Administrador SkinDeal', 'admin@skindeal.com', '$2y$10$/peleSVzqoDl3Y5i8i0nfO/IQHCjkjn1WAxDaLT2w/k17NWc8gqb.', 0, 1),
-('Usuario Teste', 'teste@skindeal.com', '$2y$10$/peleSVzqoDl3Y5i8i0nfO/IQHCjkjn1WAxDaLT2w/k17NWc8gqb.', 1500, 2)
+('Administrador SkinDeal', 'admin@skindeal.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi', 0, 1),
+('Usuario Teste', 'teste@skindeal.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi', 1500, 2)
 ON DUPLICATE KEY UPDATE usuarios_email = VALUES(usuarios_email);
 
 INSERT INTO jogos (jogos_id, jogos_nome, jogos_icone)
