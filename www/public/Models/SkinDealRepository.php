@@ -193,36 +193,34 @@ class SkinDealRepository
         return $stmt->rowCount() > 0;
     }
 
-    // ====================== DELETE USER (VERSÃO CORRIGIDA) ======================
-    public function deleteUser(string $email, string $password): bool
-    {
-        // Busca o usuário pelo email
-        $user = $this->db->query(
-            'SELECT usuarios_id, usuarios_email, usuarios_senha FROM usuarios WHERE usuarios_email = ?',
-            [$email]
-        )->fetch();
+    // ====================== DELETE USER ======================
+public function deleteUser(string $email, string $password): bool
+{
+    $user = $this->db->query(
+        'SELECT usuarios_id, usuarios_senha FROM usuarios WHERE usuarios_email = ?',
+        [$email]
+    )->fetch();
 
-        // Verifica se encontrou o usuário
-        if (!$user) {
-            error_log("Usuário não encontrado com email: " . $email);
-            return false;
-        }
-
-        // Verifica a senha
-        if (!password_verify($password, $user['usuarios_senha'])) {
-            error_log("Senha incorreta para o email: " . $email);
-            return false;
-        }
-
-        // Deleta o usuário
-        $stmt = $this->db->query(
-            'DELETE FROM usuarios WHERE usuarios_id = ?',
-            [$user['usuarios_id']]
-        );
-
-        $deleted = $stmt->rowCount() > 0;
-        error_log("Usuário deletado: " . ($deleted ? "Sim" : "Não") . " - ID: " . $user['usuarios_id']);
-        
-        return $deleted;
+    if (!$user) {
+        return false;
     }
+
+    if (!password_verify($password, $user['usuarios_senha'])) {
+        return false;
+    }
+
+    // Remove histórico de login
+    $this->db->query(
+        'DELETE FROM historico_login WHERE usuarios_id = ?',
+        [$user['usuarios_id']]
+    );
+
+    // Remove usuário
+    $stmt = $this->db->query(
+        'DELETE FROM usuarios WHERE usuarios_id = ?',
+        [$user['usuarios_id']]
+    );
+
+    return $stmt->rowCount() > 0;
+}
 }

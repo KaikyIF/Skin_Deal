@@ -89,7 +89,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         // Sucesso
         localStorage.setItem('userEmail', email);
         alert('Cadastro realizado com sucesso!');
-        window.location.href = 'home.html';
+        window.location.href = 'login.html';
 
     } catch (error) {
         console.error(error);

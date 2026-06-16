@@ -180,21 +180,20 @@ try {
     }
 
     // ==================== CRIAR PROPOSTA DE VENDA ====================
-    if ($route === 'sale-proposals' && $method === 'POST') {
-        $data = input();
-        $userId = $data['userId'] ?? null;
-        $skinId = $data['skinId'] ?? null;
-        $announcedPrice = $data['announcedPrice'] ?? null;
-        
-        if (!$userId || !$skinId || !$announcedPrice) {
-            respond(['success' => false, 'message' => 'Todos os campos são obrigatórios'], 422);
-        }
-        
-        $proposalId = $repo->createSaleProposal((int)$userId, (int)$skinId, (float)$announcedPrice);
-        respond(['success' => true, 'proposal_id' => $proposalId]);
+if ($route === 'sale-proposals' && $method === 'POST') {
+    $data = input();
+    $userId = $data['userId'] ?? null;
+    $skinId = $data['skinId'] ?? null;
+    $announcedPrice = $data['announcedPrice'] ?? null;
+    
+    if (!$userId || !$skinId || !$announcedPrice) {
+        respond(['success' => false, 'message' => 'Todos os campos são obrigatórios'], 422);
     }
-
-    // ==================== CRIAR COMPRA ====================
+    
+    $proposalId = $repo->createSaleProposal((int)$userId, (int)$skinId, (float)$announcedPrice);
+    respond(['success' => true, 'proposal_id' => $proposalId]);
+}
+    // ==================== CRIAR COMPRA (FINALIZAR COMPRA) ====================
     if ($route === 'purchase' && $method === 'POST') {
         $data = input();
         $userId = $data['userId'] ?? null;
@@ -206,7 +205,7 @@ try {
         }
         
         $purchaseId = $repo->createPurchase((int)$userId, (int)$skinId, $paymentMethod);
-        respond(['success' => true, 'purchase_id' => $purchaseId]);
+        respond(['success' => true, 'purchase_id' => $purchaseId, 'message' => 'Compra realizada com sucesso!']);
     }
 
     // ==================== DADOS DO USUÁRIO ====================

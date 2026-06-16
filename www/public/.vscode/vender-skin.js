@@ -6,10 +6,30 @@ const submitBtn = document.getElementById('submit-btn');
 const productImage = document.getElementById('product-image');
 const gameIcon = document.getElementById('game-icon');
 const chartCanvas = document.getElementById('chart-canvas');
-const API_URL = '../api.php';
+const API_URL = '/api.php';
 
 // Constants
-const COMMISSION_RATE = 0.05; // 5% commission
+const COMMISSION_RATE = 0.05;
+
+// ========== PEGAR ID DO USUÁRIO LOGADO ==========
+function getUserId() {
+    let userId = localStorage.getItem('user_id');
+    if (!userId) {
+        const currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            try {
+                const user = JSON.parse(currentUser);
+                userId = user.usuarios_id || user.id;
+                if (userId) {
+                    localStorage.setItem('user_id', userId);
+                }
+            } catch(e) {}
+        }
+    }
+    console.log('🆔 User ID:', userId);
+    return userId;
+}
+// ================================================
 
 // Load product data from localStorage
 function loadProductData() {
@@ -26,6 +46,7 @@ function loadProductData() {
     }
     
     return {
+        id: 3,
         name: 'Baioneta Crimson Web',
         price: 1300.82,
         game: 'Counter-Strike 2'
@@ -49,9 +70,7 @@ function formatCurrency(value) {
 function parseCurrency(value) {
     if (!value) return 0;
     
-    // Remove everything except numbers and comma
     const cleaned = value.replace(/[^\d,]/g, '');
-    // Replace comma with dot
     const number = parseFloat(cleaned.replace(',', '.'));
     
     return isNaN(number) ? 0 : number;
@@ -64,7 +83,6 @@ function calculateYouReceive(announcedPrice) {
         return 0;
     }
     
-    // Subtract 5% commission
     const commission = price * COMMISSION_RATE;
     const youReceive = price - commission;
     
@@ -74,22 +92,17 @@ function calculateYouReceive(announcedPrice) {
 // Format input as currency on typing
 function formatInputAsCurrency(input) {
     let value = input.value;
-    
-    // Remove everything except numbers and comma
     value = value.replace(/[^\d,]/g, '');
     
-    // Allow only one comma
     const parts = value.split(',');
     if (parts.length > 2) {
         value = parts[0] + ',' + parts.slice(1).join('');
     }
     
-    // Limit decimal places to 2
     if (parts.length === 2 && parts[1].length > 2) {
         value = parts[0] + ',' + parts[1].substring(0, 2);
     }
     
-    // Add thousand separators
     if (parts[0].length > 3) {
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         value = parts.join(',');
@@ -105,7 +118,6 @@ function updateYouReceive() {
     
     youReceiveInput.value = formatCurrency(youReceive);
     
-    // Enable/disable submit button
     if (youReceive > 0) {
         submitBtn.disabled = false;
     } else {
@@ -121,7 +133,6 @@ if (announcedPriceInput) {
     });
     
     announcedPriceInput.addEventListener('blur', (e) => {
-        // Format on blur
         const value = parseCurrency(e.target.value);
         if (value > 0) {
             e.target.value = formatCurrency(value);
@@ -132,7 +143,6 @@ if (announcedPriceInput) {
 // Back button navigation
 if (backBtn) {
     backBtn.addEventListener('click', () => {
-        // Go back to inventory or previous page
         window.history.back();
     });
 }
@@ -140,38 +150,65 @@ if (backBtn) {
 // Submit button - Send trade proposal
 if (submitBtn) {
     submitBtn.addEventListener('click', async () => {
+        const userId = getUserId();
+        
+        console.log('=== ENVIANDO PROPOSTA ===');
+        console.log('User ID:', userId);
+        
+        if (!userId) {
+            showNotification('Você precisa estar logado para vender. Faça login.', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+            return;
+        }
+
+        const product = loadProductData();
         const announcedPrice = parseCurrency(announcedPriceInput.value);
         const youReceive = calculateYouReceive(announcedPriceInput.value);
-        const product = loadProductData();
-        
+        const skinId = product.id || 3;
+
+        console.log('Dados a enviar:');
+        console.log('userId:', userId);
+        console.log('skinId:', skinId);
+        console.log('announcedPrice:', announcedPrice);
+
         if (announcedPrice <= 0) {
             showNotification('Por favor, insira um preço válido.', 'error');
             return;
         }
         
-        // Show loading state
         submitBtn.classList.add('loading');
         submitBtn.disabled = true;
         
         try {
+            const requestBody = {
+                userId: parseInt(userId),
+                skinId: parseInt(skinId),
+                announcedPrice: parseFloat(announcedPrice)
+            };
+            
+            console.log('Body da requisição:', requestBody);
+            
             const response = await fetch(`${API_URL}?route=sale-proposals`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    skinId: product.id || 3,
-                    announcedPrice
-                })
+                body: JSON.stringify(requestBody)
             });
+            
+            console.log('Status da resposta:', response.status);
+            
             const result = await response.json();
+            console.log('Resposta da API:', result);
 
             if (!result.success) {
-                showNotification(result.message || 'Nao foi possivel enviar a proposta.', 'error');
+                showNotification(result.message || 'Não foi possível enviar a proposta.', 'error');
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
                 return;
             }
 
-            saveTradePropsal({
+            saveTradeProposal({
                 announcedPrice: announcedPrice,
                 youReceive: youReceive,
                 commission: announcedPrice * COMMISSION_RATE,
@@ -183,15 +220,16 @@ if (submitBtn) {
             submitBtn.classList.remove('loading');
             submitBtn.textContent = 'Proposta Enviada!';
             
-            // Redirect after delay
             setTimeout(() => {
                 showNotification('Redirecionando para processar troca...', 'info');
                 setTimeout(() => {
                     window.location.href = 'troca-venda.html';
                 }, 1500);
             }, 2000);
+            
         } catch (error) {
-            showNotification('Nao foi possivel conectar ao servidor.', 'error');
+            console.error('❌ Erro:', error);
+            showNotification('Não foi possível conectar ao servidor.', 'error');
             submitBtn.classList.remove('loading');
             submitBtn.disabled = false;
         }
@@ -199,7 +237,7 @@ if (submitBtn) {
 }
 
 // Save trade proposal to localStorage
-function saveTradePropsal(proposal) {
+function saveTradeProposal(proposal) {
     try {
         const product = loadProductData();
         
@@ -214,11 +252,9 @@ function saveTradePropsal(proposal) {
             status: 'Pendente'
         };
         
-        // Save to localStorage
         const proposals = JSON.parse(localStorage.getItem('tradeProposals') || '[]');
         proposals.unshift(tradeProposal);
         
-        // Keep only last 20 proposals
         if (proposals.length > 20) {
             proposals.splice(20);
         }
@@ -301,7 +337,6 @@ document.head.appendChild(style);
 function drawChart() {
     if (!chartCanvas) return;
     
-    // Create grid lines
     const grid = document.createElement('div');
     grid.className = 'chart-grid';
     
@@ -313,13 +348,11 @@ function drawChart() {
     
     chartCanvas.appendChild(grid);
     
-    // Create SVG for chart lines
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('class', 'chart-svg');
     svg.setAttribute('viewBox', '0 0 272 163');
     svg.setAttribute('preserveAspectRatio', 'none');
     
-    // Green line (Última venda) - smooth curve going up
     const greenPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     greenPath.setAttribute('d', 'M1 55 L17 43 L36 43 L52 34 L67 59 L77 6 L93 94 L96 83 L102 73 L108 83 L119 83 L124 92 L129 73 L143 81 L160 109 L199 109 L206 110 L213 109 L270 109');
     greenPath.setAttribute('stroke', '#00E832');
@@ -327,7 +360,6 @@ function drawChart() {
     greenPath.setAttribute('stroke-linecap', 'round');
     greenPath.setAttribute('fill', 'none');
     
-    // Red line (Procura/oferta) - lower line
     const redPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     redPath.setAttribute('d', 'M1 147 L40 147 L49 152 L63 142 L103 149 L154 140 L206 145 L258 150 L270 147');
     redPath.setAttribute('stroke', '#FF1A00');
@@ -363,14 +395,12 @@ if (gameIcon) {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // ESC to go back
     if (e.key === 'Escape') {
         if (backBtn) {
             backBtn.click();
         }
     }
     
-    // Enter to submit (if enabled)
     if (e.key === 'Enter') {
         if (submitBtn && !submitBtn.disabled) {
             submitBtn.click();
@@ -383,10 +413,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const product = loadProductData();
     console.log('Vender Skin - Página carregada');
     
-    // Draw chart
     drawChart();
     
-    // Focus on price input after short delay
     setTimeout(() => {
         if (announcedPriceInput) {
             announcedPriceInput.focus();

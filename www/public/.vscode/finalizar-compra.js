@@ -1,3 +1,5 @@
+const API_URL = '/api.php';
+
 // DOM Elements
 const backBtn = document.getElementById('back-btn');
 const paymentBtn = document.getElementById('payment-btn');
@@ -6,7 +8,25 @@ const copyBtn = document.getElementById('copy-btn');
 const pixCodeInput = document.getElementById('pix-code');
 const timerElement = document.getElementById('timer');
 const confirmPaymentBtn = document.getElementById('confirm-payment-btn');
-const API_URL = '../api.php';
+
+// ==================== PEGAR ID DO USUÁRIO LOGADO ====================
+function getUserId() {
+    let userId = localStorage.getItem('user_id');
+    if (!userId) {
+        const currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            try {
+                const user = JSON.parse(currentUser);
+                userId = user.usuarios_id || user.id;
+                if (userId) {
+                    localStorage.setItem('user_id', userId);
+                }
+            } catch(e) {}
+        }
+    }
+    console.log('🆔 User ID:', userId);
+    return userId;
+}
 
 // Load purchase data
 function loadPurchaseData() {
@@ -16,7 +36,6 @@ function loadPurchaseData() {
         try {
             const product = JSON.parse(savedProduct);
             
-            // Update product info
             const productName = document.getElementById('product-preview-name');
             if (productName) {
                 productName.textContent = product.name || 'Bayonet Crimson Web';
@@ -28,7 +47,6 @@ function loadPurchaseData() {
                 productImage.alt = product.name;
             }
             
-            // Update payment amount
             const price = product.price || 1312.51;
             const priceFormatted = price.toFixed(2).replace('.', ',');
             
@@ -43,6 +61,7 @@ function loadPurchaseData() {
             }
             
             return {
+                id: product.id || 3,
                 name: product.name || 'Bayonet Crimson Web',
                 price: price
             };
@@ -52,6 +71,7 @@ function loadPurchaseData() {
     }
     
     return {
+        id: 3,
         name: 'Bayonet Crimson Web',
         price: 1312.51
     };
@@ -67,20 +87,11 @@ if (backBtn) {
 // Payment button - Show QR Code
 if (paymentBtn) {
     paymentBtn.addEventListener('click', () => {
-        // Show QR code section
         if (qrCodeSection) {
             qrCodeSection.style.display = 'block';
-            
-            // Render QR Code SVG from Figma
             renderQRCode();
-            
-            // Scroll to QR code section
             qrCodeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Start countdown timer
             startPaymentTimer();
-            
-            // Show notification
             showNotification('QR Code gerado com sucesso! Complete o pagamento.', 'success');
         }
     });
@@ -91,7 +102,6 @@ function renderQRCode() {
     const qrCodeContainer = document.getElementById('qr-code-svg');
     if (!qrCodeContainer) return;
     
-    // Create image element with real QR Code
     const img = document.createElement('img');
     img.src = '../Imagens do site/qrcode%201.svg';
     img.alt = 'QR Code PIX';
@@ -102,7 +112,6 @@ function renderQRCode() {
         border-radius: 8px;
     `;
     
-    // Error fallback
     img.addEventListener('error', function() {
         this.style.cssText = `
             width: 100%;
@@ -116,7 +125,6 @@ function renderQRCode() {
         this.alt = 'QR Code não disponível';
     });
     
-    // Clear container and add image
     qrCodeContainer.innerHTML = '';
     qrCodeContainer.appendChild(img);
 }
@@ -128,7 +136,6 @@ if (copyBtn) {
             const pixCode = pixCodeInput.value;
             await navigator.clipboard.writeText(pixCode);
             
-            // Change button text temporarily
             const originalText = copyBtn.textContent;
             copyBtn.textContent = 'Copiado!';
             copyBtn.style.backgroundColor = '#00e832';
@@ -146,10 +153,10 @@ if (copyBtn) {
     });
 }
 
-// Payment Timer (10 minutes countdown)
+// Payment Timer
 let timerInterval;
 function startPaymentTimer() {
-    let timeLeft = 600; // 10 minutes in seconds
+    let timeLeft = 600;
     
     if (timerInterval) {
         clearInterval(timerInterval);
@@ -167,7 +174,6 @@ function startPaymentTimer() {
             return;
         }
         
-        // Update timer display
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
         const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -176,7 +182,6 @@ function startPaymentTimer() {
             timerElement.textContent = timeString;
         }
         
-        // Change color when time is running out (last 2 minutes)
         if (timeLeft <= 120 && timerElement) {
             timerElement.parentElement.style.color = '#ff4444';
         }
@@ -190,8 +195,7 @@ function showNotification(message, type = 'info') {
     const toast = document.createElement('div');
     toast.textContent = message;
     
-    const backgroundColor = type === 'error' ? '#d32f2f' : 
-                           type === 'success' ? '#10355b' : '#10355b';
+    const backgroundColor = type === 'error' ? '#d32f2f' : '#10355b';
     
     toast.style.cssText = `
         position: fixed;
@@ -271,7 +275,6 @@ if (pixLogo) {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // ESC to go back
     if (e.key === 'Escape') {
         if (qrCodeSection && qrCodeSection.style.display === 'block') {
             qrCodeSection.style.display = 'none';
@@ -283,7 +286,6 @@ document.addEventListener('keydown', (e) => {
         }
     }
     
-    // Ctrl/Cmd + Enter to confirm payment
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         if (paymentBtn && qrCodeSection.style.display !== 'block') {
@@ -299,32 +301,47 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-// Confirm Payment Button - Redirect to success page
+// ==================== CONFIRMAR PAGAMENTO - CORRIGIDO ====================
 if (confirmPaymentBtn) {
     confirmPaymentBtn.addEventListener('click', async () => {
-        // Stop timer
+        // Verificar se usuário está logado
+        const userId = getUserId();
+        if (!userId) {
+            showNotification('Você precisa estar logado para comprar. Faça login.', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+            return;
+        }
+
         if (timerInterval) {
             clearInterval(timerInterval);
         }
         
-        // Show loading state
         confirmPaymentBtn.textContent = 'Processando...';
         confirmPaymentBtn.disabled = true;
         
         try {
             const product = JSON.parse(localStorage.getItem('selectedProduct') || '{}');
+            const skinId = product.id || 3;
+            
+            console.log('Enviando compra:', { userId, skinId });
+            
             const response = await fetch(`${API_URL}?route=purchase`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    skinId: product.id || 3,
+                    userId: parseInt(userId),
+                    skinId: skinId,
                     paymentMethod: 'PIX'
                 })
             });
+            
             const result = await response.json();
+            console.log('Resposta:', result);
 
             if (!result.success) {
-                showNotification(result.message || 'Nao foi possivel confirmar o pagamento.', 'error');
+                showNotification(result.message || 'Não foi possível confirmar o pagamento.', 'error');
                 confirmPaymentBtn.textContent = 'Confirmar pagamento';
                 confirmPaymentBtn.disabled = false;
                 return;
@@ -332,12 +349,13 @@ if (confirmPaymentBtn) {
 
             showNotification('Pagamento confirmado com sucesso!', 'success');
             
-            // Redirect to confirmation page after short delay
             setTimeout(() => {
                 window.location.href = 'pagamento-confirmado.html';
             }, 1000);
+            
         } catch (error) {
-            showNotification('Nao foi possivel conectar ao servidor.', 'error');
+            console.error('Erro:', error);
+            showNotification('Não foi possível conectar ao servidor.', 'error');
             confirmPaymentBtn.textContent = 'Confirmar pagamento';
             confirmPaymentBtn.disabled = false;
         }
